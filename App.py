@@ -39,7 +39,7 @@ if uploaded_file:
 
     # QA Chain with Groq + LLaMA 3
     qa = RetrievalQA.from_chain_type(
-        llm=ChatGroq(temperature=0.7, model_name="llama3-8b-8192"),
+        llm=ChatGroq(temperature=0.7, model_name="llama3-70b-8192"),
         retriever=db.as_retriever(),
         return_source_documents=True
     )
