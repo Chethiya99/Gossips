@@ -4,3 +4,5 @@ langchain
 langchain-groq
 faiss-cpu
 sentence-transformers
+duckduckgo-search
+
