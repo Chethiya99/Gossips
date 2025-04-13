@@ -1,22 +1,26 @@
 import streamlit as st
 import pandas as pd
-from langchain.embeddings.openai import OpenAIEmbeddings
+import os
+import re
+
 from langchain.vectorstores import FAISS
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.llms import OpenAI
 from langchain.chains import RetrievalQA
 from langchain.document_loaders import DataFrameLoader
-import os  # Removed ddg_images import
+from langchain_groq import ChatGroq
+from langchain.embeddings import HuggingFaceEmbeddings
 
-# Set your OpenAI key
-os.environ["OPENAI_API_KEY"] = st.secrets["openai"]["api_key"]
+# Set Groq API Key
+os.environ["GROQ_API_KEY"] = st.secrets["groq"]["api_key"]
 
+# Streamlit UI
 st.set_page_config(page_title="Gossip Genie 💅", layout="centered")
 st.title("🧃 Gossip Genie")
 st.caption("Ask juicy questions about celebrities mentioned in your gossip files.")
 
 # Upload or load your gossip CSV
 uploaded_file = st.file_uploader("Upload your gossip CSV", type="csv")
+
 if uploaded_file:
     df = pd.read_csv(uploaded_file)
 
@@ -28,14 +32,13 @@ if uploaded_file:
     splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100)
     docs = splitter.split_documents(data)
 
-    # Create embeddings
-    embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
-
+    # Use HuggingFace embeddings
+    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     db = FAISS.from_documents(docs, embeddings)
 
-    # QA Chain
+    # QA Chain with Groq LLaMA 3
     qa = RetrievalQA.from_chain_type(
-        llm=OpenAI(temperature=0.7),
+        llm=ChatGroq(temperature=0.7, model_name="llama3-8b-8192"),
         retriever=db.as_retriever(),
         return_source_documents=True
     )
