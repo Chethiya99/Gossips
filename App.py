@@ -9,7 +9,7 @@ from langchain.chains import RetrievalQA
 from langchain.document_loaders import DataFrameLoader
 from langchain_groq import ChatGroq
 from langchain.embeddings import HuggingFaceEmbeddings
-from duckduckgo_search import ddg_images
+from duckduckgo_search import DDGS
 
 # Set Groq API Key
 os.environ["GROQ_API_KEY"] = st.secrets["groq"]["api_key"]
@@ -57,17 +57,21 @@ if uploaded_file:
             for doc in result["source_documents"]:
                 st.markdown(f"💬 *{doc.page_content}*")
 
-            # Extract celeb names from the answer
+            # Extract celeb names and show images
             names = re.findall(r'\b[A-Z][a-z]+\s[A-Z][a-z]+\b', result['result'])
             if names:
                 st.markdown("🖼️ **Suspected Celebs:**")
-                for name in set(names):
-                    st.write(f"🔍 Searching for: {name}")
-                    try:
-                        image_results = ddg_images(name + " celebrity", max_results=1)
-                        if image_results:
-                            st.image(image_results[0]['image'], caption=name, width=200)
-                    except:
-                        st.warning(f"Couldn't find an image for {name}")
+                with DDGS() as ddgs:
+                    for name in set(names):
+                        st.write(f"🔍 Searching for: {name}")
+                        try:
+                            image_results = ddgs.images(name + " celebrity", max_results=1)
+                            image_results = list(image_results)
+                            if image_results:
+                                st.image(image_results[0]["image"], caption=name, width=200)
+                            else:
+                                st.warning(f"No image found for {name}")
+                        except Exception as e:
+                            st.warning(f"Error fetching image for {name}: {e}")
             else:
                 st.info("No celebrity names detected to show images for.")
