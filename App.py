@@ -9,6 +9,7 @@ from langchain.chains import RetrievalQA
 from langchain.document_loaders import DataFrameLoader
 from langchain_groq import ChatGroq
 from langchain.embeddings import HuggingFaceEmbeddings
+from duckduckgo_search import ddg_images
 
 # Set Groq API Key
 os.environ["GROQ_API_KEY"] = st.secrets["groq"]["api_key"]
@@ -18,7 +19,7 @@ st.set_page_config(page_title="Gossip Genie 💅", layout="centered")
 st.title("🧃 Gossip Genie")
 st.caption("Ask juicy questions about celebrities mentioned in your gossip files.")
 
-# Upload or load your gossip CSV
+# Upload your gossip CSV
 uploaded_file = st.file_uploader("Upload your gossip CSV", type="csv")
 
 if uploaded_file:
@@ -32,11 +33,11 @@ if uploaded_file:
     splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100)
     docs = splitter.split_documents(data)
 
-    # Use HuggingFace embeddings
+    # Use HuggingFace embeddings (no OpenAI)
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     db = FAISS.from_documents(docs, embeddings)
 
-    # QA Chain with Groq LLaMA 3
+    # QA Chain with Groq + LLaMA 3
     qa = RetrievalQA.from_chain_type(
         llm=ChatGroq(temperature=0.7, model_name="llama3-8b-8192"),
         retriever=db.as_retriever(),
@@ -55,3 +56,18 @@ if uploaded_file:
             st.subheader("📜 Gossip Source")
             for doc in result["source_documents"]:
                 st.markdown(f"💬 *{doc.page_content}*")
+
+            # Extract celeb names from the answer
+            names = re.findall(r'\b[A-Z][a-z]+\s[A-Z][a-z]+\b', result['result'])
+            if names:
+                st.markdown("🖼️ **Suspected Celebs:**")
+                for name in set(names):
+                    st.write(f"🔍 Searching for: {name}")
+                    try:
+                        image_results = ddg_images(name + " celebrity", max_results=1)
+                        if image_results:
+                            st.image(image_results[0]['image'], caption=name, width=200)
+                    except:
+                        st.warning(f"Couldn't find an image for {name}")
+            else:
+                st.info("No celebrity names detected to show images for.")
