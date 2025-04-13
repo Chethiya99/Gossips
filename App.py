@@ -29,7 +29,8 @@ if uploaded_file:
     docs = splitter.split_documents(data)
 
     # Create embeddings
-    embeddings = OpenAIEmbeddings()
+    embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
+
     db = FAISS.from_documents(docs, embeddings)
 
     # QA Chain
