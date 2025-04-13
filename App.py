@@ -51,11 +51,7 @@ if uploaded_file:
             result = qa({"query": question})
             st.markdown(f"**🍵 Gossip Answer:** {result['result']}")
 
-            # Show the source gossip
-            st.markdown("---")
-            st.subheader("📜 Gossip Source")
-            for doc in result["source_documents"]:
-                st.markdown(f"💬 *{doc.page_content}*")
+            
 
             # Extract celeb names and show images
             names = re.findall(r'\b[A-Z][a-z]+\s[A-Z][a-z]+\b', result['result'])
