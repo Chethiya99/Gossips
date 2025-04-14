@@ -10,7 +10,6 @@ from langchain.document_loaders import DataFrameLoader
 from langchain_groq import ChatGroq
 from langchain.embeddings import HuggingFaceEmbeddings
 from duckduckgo_search import DDGS
-
 # Set Groq API Key
 os.environ["GROQ_API_KEY"] = st.secrets["groq"]["api_key"]
 
