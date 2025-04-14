@@ -20,7 +20,7 @@ st.title("🧃 Gossip Genie")
 st.caption("Ask juicy questions about celebrities mentioned in your gossip files.")
 
 # Read local CSV (uploaded in the same repo)
-CSV_FILE_PATH = "gossip.csv"
+CSV_FILE_PATH = "gossips.csv"
 
 try:
     df = pd.read_csv(CSV_FILE_PATH)
