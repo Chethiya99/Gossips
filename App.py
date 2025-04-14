@@ -19,11 +19,11 @@ st.set_page_config(page_title="Gossip Genie 💅", layout="centered")
 st.title("🧃 Gossip Genie")
 st.caption("Ask juicy questions about celebrities mentioned in your gossip files.")
 
-# Upload your gossip CSV
-uploaded_file = st.file_uploader("Upload your gossip CSV", type="csv")
+# Read local CSV (uploaded in the same repo)
+CSV_FILE_PATH = "gossip.csv"
 
-if uploaded_file:
-    df = pd.read_csv(uploaded_file)
+try:
+    df = pd.read_csv(CSV_FILE_PATH)
 
     # Load data into LangChain
     loader = DataFrameLoader(df, page_content_column="text")
@@ -33,13 +33,13 @@ if uploaded_file:
     splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100)
     docs = splitter.split_documents(data)
 
-    # Use HuggingFace embeddings (no OpenAI)
+    # Use HuggingFace embeddings
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     db = FAISS.from_documents(docs, embeddings)
 
     # QA Chain with Groq + LLaMA 3
     qa = RetrievalQA.from_chain_type(
-        llm=ChatGroq(temperature=0.6, model_name="llama3-70b-8192"),
+        llm=ChatGroq(temperature=0.7, model_name="llama3-8b-8192"),
         retriever=db.as_retriever(),
         return_source_documents=True
     )
@@ -51,7 +51,11 @@ if uploaded_file:
             result = qa({"query": question})
             st.markdown(f"**🍵 Gossip Answer:** {result['result']}")
 
-            
+            # Show the source gossip
+            st.markdown("---")
+            st.subheader("📜 Gossip Source")
+            for doc in result["source_documents"]:
+                st.markdown(f"💬 *{doc.page_content}*")
 
             # Extract celeb names and show images
             names = re.findall(r'\b[A-Z][a-z]+\s[A-Z][a-z]+\b', result['result'])
@@ -71,3 +75,8 @@ if uploaded_file:
                             st.warning(f"Error fetching image for {name}: {e}")
             else:
                 st.info("No celebrity names detected to show images for.")
+
+except FileNotFoundError:
+    st.error("📁 gossip.csv not found. Please make sure it's in the same folder as this app.")
+except Exception as e:
+    st.error(f"Something went wrong: {e}")
